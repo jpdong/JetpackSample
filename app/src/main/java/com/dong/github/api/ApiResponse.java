@@ -53,6 +53,10 @@ public class ApiResponse<T> {
         public T body;
         public Map<String,String> links;
         public int nextPage;
+        /**
+         *  in order to get page index
+         *  <https://api.github.com/search/repositories?q=android&page=2>; rel="next", <https://api.github.com/search/repositories?q=android&page=34>; rel="last"
+         */
         private Pattern LINK_PATTERN = Pattern.compile("<([^>]*)>[\\s]*;[\\s]*rel=\"([a-zA-Z0-9]+)\"");
         private Pattern PAGE_PATTERN = Pattern.compile("\\bpage=(\\d+)");
         private static final String NEXT_LINK = "next";
