@@ -44,7 +44,6 @@ public abstract class NetworkBoundResource<ResultType,RequestType> {
                 }
             }
         });
-        mDbSource = loadFromDb();
     }
 
     private void fetchFromNetwork(LiveData<ResultType> dbSource) {
@@ -112,7 +111,7 @@ public abstract class NetworkBoundResource<ResultType,RequestType> {
 
     protected abstract void saveCallResult(RequestType item);
 
-    private RequestType processResponse(ApiResponse.Success<RequestType> response) {
+    protected RequestType processResponse(ApiResponse.Success<RequestType> response) {
         return response.body;
     }
 

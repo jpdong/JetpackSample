@@ -31,32 +31,32 @@ public class RepoRepository {
     private GithubDb mGithubDb;
     private GithubService mGithubService;
 
-    private RepoRepository(AppExecutors appExecutors,GithubDb db,GithubService githubService) {
+    private RepoRepository(AppExecutors appExecutors, GithubDb db, GithubService githubService) {
         this.mAppExecutors = appExecutors;
         this.mGithubDb = db;
         this.mGithubService = githubService;
     }
 
-    public static synchronized RepoRepository getInstance(AppExecutors appExecutors,GithubDb db,GithubService githubService) {
+    public static synchronized RepoRepository getInstance(AppExecutors appExecutors, GithubDb db, GithubService githubService) {
         if (sInstance == null) {
-            sInstance = new RepoRepository(appExecutors,db,githubService);
+            sInstance = new RepoRepository(appExecutors, db, githubService);
         }
         return sInstance;
     }
 
 
     public LiveData<Resource<List<Repo>>> search(String input) {
-        Log.d(TAG, String.format("RepoRepository/search:thread(%s)",Thread.currentThread().getName()));
-        return new NetworkBoundResource<List<Repo>, RepoSearchResponse>(mAppExecutors){
+        Log.d(TAG, String.format("RepoRepository/search:thread(%s)", Thread.currentThread().getName()));
+        return new NetworkBoundResource<List<Repo>, RepoSearchResponse>(mAppExecutors) {
 
             @Override
             protected void onFetchFailed() {
-                Log.d(TAG, String.format("RepoRepository/onFetchFailed:thread(%s)",Thread.currentThread().getName()));
+                Log.d(TAG, String.format("RepoRepository/onFetchFailed:thread(%s)", Thread.currentThread().getName()));
             }
 
             @Override
             protected void saveCallResult(RepoSearchResponse item) {
-                Log.d(TAG, String.format("RepoRepository/saveCallResult:thread(%s)",Thread.currentThread().getName()));
+                Log.d(TAG, String.format("RepoRepository/saveCallResult:thread(%s)", Thread.currentThread().getName()));
                 List<Integer> repoIds = item.items.stream().map(new Function<Repo, Integer>() {
                     @Override
                     public Integer apply(Repo repo) {
@@ -74,20 +74,37 @@ public class RepoRepository {
             }
 
             @Override
+            protected RepoSearchResponse processResponse(ApiResponse.Success<RepoSearchResponse> response) {
+                RepoSearchResponse body = response.body;
+                body.nextPage = response.nextPage;
+                return super.processResponse(response);
+            }
+
+            @Override
             protected LiveData<ApiResponse<RepoSearchResponse>> createCall() {
-                Log.d(TAG, String.format("RepoRepository/createCall:thread(%s)",Thread.currentThread().getName()));
-                return mGithubService.searchRepos(input);
+                Log.d(TAG, String.format("RepoRepository/createCall:thread(%s)", Thread.currentThread().getName()));
+                LiveData<ApiResponse<RepoSearchResponse>> responseLiveData = mGithubService.searchRepos(input);
+                ApiResponse<RepoSearchResponse> value = responseLiveData.getValue();
+                if (value != null) {
+                    RepoSearchResponse searchResponse = ((ApiResponse.Success<RepoSearchResponse>)responseLiveData.getValue()).body;
+                    if (searchResponse != null) {
+                        Log.d(TAG, String.format("RepoRepository/createCall:thread(%s) items size(%s)",Thread.currentThread().getName(),searchResponse
+                                .items.size()));
+                    }
+                }
+                return responseLiveData;
             }
 
             @Override
             protected boolean shouldFetch(List<Repo> data) {
-                Log.d(TAG, String.format("RepoRepository/shouldFetch:thread(%s) data(%s)",Thread.currentThread().getName(),data));
-                return data == null;
+                Log.d(TAG, String.format("RepoRepository/shouldFetch:thread(%s) data(%s)", Thread.currentThread().getName(), data));
+                //return data == null;
+                return true;
             }
 
             @Override
             protected LiveData<List<Repo>> loadFromDb() {
-                Log.d(TAG, String.format("RepoRepository/loadFromDb:thread(%s)",Thread.currentThread().getName()));
+                Log.d(TAG, String.format("RepoRepository/loadFromDb:thread(%s)", Thread.currentThread().getName()));
                 return Transformations.switchMap(mGithubDb.repoDao().search(input), new androidx.arch.core.util.Function<RepoSearchResult, LiveData<List<Repo>>>() {
                     @Override
                     public LiveData<List<Repo>> apply(RepoSearchResult result) {
@@ -100,5 +117,12 @@ public class RepoRepository {
                 });
             }
         }.asLiveData();
+    }
+
+    public LiveData<Resource<Boolean>> searchNextPage(String query) {
+        Log.d(TAG, String.format("RepoRepository/searchNextPage:thread(%s)",Thread.currentThread().getName()));
+        FetchNextSearchPageTask task = new FetchNextSearchPageTask(query,mGithubService,mGithubDb);
+        mAppExecutors.mNetworkIO.execute(task);
+        return task.mLiveData;
     }
 }

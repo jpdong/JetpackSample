@@ -32,6 +32,7 @@ import com.dong.github.repository.RepoRepository;
 import com.dong.github.util.LiveDataCallAdapterFactory;
 import com.dong.github.vo.Repo;
 import com.dong.github.vo.Resource;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.List;
 
@@ -125,6 +126,20 @@ public class SearchFragment extends Fragment {
             @Override
             public void onChanged(Resource<List<Repo>> listResource) {
                 mAdapter.submitList(listResource.data);
+            }
+        });
+        mSearchViewModel.getLoadMoreStateLiveData().observe(getViewLifecycleOwner(), new Observer<SearchViewModel.LoadMoreState>() {
+            @Override
+            public void onChanged(SearchViewModel.LoadMoreState loadMoreState) {
+                if (loadMoreState == null) {
+                    mSearchFragmentBinding.setLoadingMore(false);
+                } else {
+                    mSearchFragmentBinding.setLoadingMore(loadMoreState.isRunning);
+                    String error = loadMoreState.getErrorMessageIfNotHandled();
+                    if (error != null) {
+                        Snackbar.make(mSearchFragmentBinding.pbLoadMore,error,Snackbar.LENGTH_LONG).show();
+                    }
+                }
             }
         });
     }

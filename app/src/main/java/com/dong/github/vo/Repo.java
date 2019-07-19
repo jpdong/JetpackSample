@@ -1,6 +1,7 @@
 package com.dong.github.vo;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.room.Embedded;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
@@ -28,5 +29,14 @@ public class Repo {
         @NonNull
         public String login;
         public String url;
+    }
+
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        if (obj instanceof Repo) {
+            return name.equals(((Repo) obj).name) && stars == ((Repo) obj).stars;
+        } else {
+            return super.equals(obj);
+        }
     }
 }

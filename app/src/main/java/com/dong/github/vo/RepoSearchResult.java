@@ -18,7 +18,7 @@ public class RepoSearchResult {
     public String query;
     public List<Integer> repoIds;
     public int totalCount;
-    public int next;
+    public int next = 0;
 
     public RepoSearchResult(@NonNull String query, List<Integer> repoIds, int totalCount, int next) {
         this.query = query;

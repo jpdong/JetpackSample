@@ -6,6 +6,7 @@ import android.util.Log;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import retrofit2.Response;
@@ -51,16 +52,45 @@ public class ApiResponse<T> {
     public static class Success<T> extends ApiResponse<T> {
         public T body;
         public Map<String,String> links;
-        private Pattern LINK_PATTERN = Pattern.compile("");
+        public int nextPage;
+        private Pattern LINK_PATTERN = Pattern.compile("<([^>]*)>[\\s]*;[\\s]*rel=\"([a-zA-Z0-9]+)\"");
+        private Pattern PAGE_PATTERN = Pattern.compile("\\bpage=(\\d+)");
+        private static final String NEXT_LINK = "next";
+
 
         public Success(T body, String linkHeader) {
             this.body = body;
             this.links = extractLinks(linkHeader);
+            extracNextPage();
+        }
+
+        private void extracNextPage() {
+            String next = links.get(NEXT_LINK);
+            if ( next!= null) {
+                Matcher matcher = PAGE_PATTERN.matcher(next);
+                if (!matcher.find() || matcher.groupCount() != 1) {
+                    nextPage = 0;
+                } else {
+                    try {
+                        nextPage = Integer.valueOf(matcher.group(1));
+                    } catch (NumberFormatException e) {
+                        e.printStackTrace();
+                        nextPage = 0;
+                    }
+                }
+            }
         }
 
         private Map<String, String> extractLinks(String linkHeader) {
             LinkedHashMap<String, String> result = new LinkedHashMap<>();
-            return null;
+            Matcher matcher = LINK_PATTERN.matcher(linkHeader);
+            while (matcher.find()) {
+               int count = matcher.groupCount();
+                if (count == 2) {
+                    result.put(matcher.group(2),matcher.group(1));
+                }
+            }
+            return result;
         }
     }
 

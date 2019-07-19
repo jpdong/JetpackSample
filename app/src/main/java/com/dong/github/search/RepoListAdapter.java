@@ -1,5 +1,6 @@
 package com.dong.github.search;
 
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,14 +26,12 @@ class RepoListAdapter extends DataBoundListAdapter<Repo, RepoItemBinding> {
         super(new DiffUtil.ItemCallback<Repo>() {
             @Override
             public boolean areItemsTheSame(@NonNull Repo oldItem, @NonNull Repo newItem) {
-                return oldItem.owner == newItem.owner
-                        && oldItem.name.equals(newItem.name);
+                return oldItem.equals(newItem);
             }
 
             @Override
             public boolean areContentsTheSame(@NonNull Repo oldItem, @NonNull Repo newItem) {
-                return oldItem.description.equals(newItem.description)
-                        && oldItem.stars == newItem.stars;
+                return oldItem.equals(newItem);
             }
         });
         this.mShowFullName = showFullName;

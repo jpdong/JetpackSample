@@ -60,4 +60,7 @@ public abstract class RepoDao {
 
     @Query("select * from Repo where id in (:repoIds)")
     protected abstract LiveData<List<Repo>> loadById(List<Integer> repoIds);
+
+    @Query("select * from RepoSearchResult where `query` = :query")
+    public abstract RepoSearchResult findSearchResult(String query);
 }

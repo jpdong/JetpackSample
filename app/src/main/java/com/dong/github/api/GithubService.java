@@ -2,6 +2,8 @@ package com.dong.github.api;
 
 import androidx.lifecycle.LiveData;
 
+import retrofit2.Call;
+import retrofit2.Response;
 import retrofit2.http.GET;
 import retrofit2.http.Query;
 
@@ -11,4 +13,8 @@ import retrofit2.http.Query;
 public interface GithubService {
     @GET("search/repositories")
     LiveData<ApiResponse<RepoSearchResponse>> searchRepos(@Query("q") String input);
+
+
+    @GET("search/repositories")
+    Call<RepoSearchResponse> searchRepos(@Query("q") String mQuery,@Query("page") int nextPage);
 }
